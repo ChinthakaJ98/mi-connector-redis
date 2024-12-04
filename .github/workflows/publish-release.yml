@@ -26,7 +26,7 @@ jobs:
           echo "<settings>
                   <servers>
                     <server>
-                      <id>nexus-releases</id>
+                      <id>nexus</id>
                       <username>${{ secrets.NEXUS_USERNAME }}</username>
                       <password>${{ secrets.NEXUS_PASSWORD }}</password>
                     </server>
@@ -41,3 +41,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.WSO2_INTEGRATION_BOT_TOKEN }}
         run: |
           mvn --batch-mode release:prepare release:perform
+      - name: Set up GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gh
+
+      - name: Create GitHub Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.WSO2_INTEGRATION_BOT_TOKEN }}
+        run: |
+          RELEASE_VERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout | grep -v '\[' | head -n 1 | sed 's/-SNAPSHOT//')
+          gh release create "v$RELEASE_VERSION" \
+            --notes "Release version $RELEASE_VERSION" \
+            --target test-github-release
